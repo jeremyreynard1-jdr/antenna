@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tab Triage</title>
+  <link rel="stylesheet" href="sidepanel.css">
+</head>
+<body>
+  <header>
+    <h1>Tab Triage</h1>
+    <div id="stats">
+      <span id="tab-count">-</span>
+      <span id="window-count">-</span>
+    </div>
+  </header>
+
+  <nav id="views">
+    <button class="view-btn active" data-view="triage">
+      <span class="view-icon">&#x26A1;</span>
+      <span class="view-label">Triage</span>
+    </button>
+    <button class="view-btn" data-view="ai">
+      <span class="view-icon">&#x2728;</span>
+      <span class="view-label">AI Sort</span>
+    </button>
+    <button class="view-btn" data-view="actions">
+      <span class="view-icon">&#x2611;</span>
+      <span class="view-label">Actions</span>
+    </button>
+    <button class="view-btn" data-view="snoozed">
+      <span class="view-icon">&#x1F4A4;</span>
+      <span class="view-label">Snoozed</span>
+    </button>
+    <button class="view-btn" data-view="analytics">
+      <span class="view-icon">&#x1F4CA;</span>
+      <span class="view-label">Stats</span>
+    </button>
+  </nav>
+
+  <!-- TRIAGE VIEW -->
+  <div id="triage-view" class="view">
+
+    <!-- Mode toggle -->
+    <div id="triage-mode">
+      <button class="mode-btn active" data-mode="this">This Tab</button>
+      <button class="mode-btn" data-mode="all">All Tabs</button>
+    </div>
+
+    <!-- Pre-triage analysis banner -->
+    <div id="analysis-banner" class="hidden">
+      <div id="duplicate-alert" class="alert-wrap hidden">
+        <div class="alert">
+          <div class="alert-icon">2x</div>
+          <div class="alert-text">
+            <strong><span id="dup-count">0</span> duplicate tabs</strong> found
+          </div>
+          <button id="toggle-duplicates" class="alert-action">View</button>
+          <button id="close-duplicates" class="alert-action alert-action-primary">Close extras</button>
+        </div>
+        <div id="duplicate-list" class="alert-details hidden"></div>
+      </div>
+    </div>
+
+    <!-- THIS TAB: Single card view -->
+    <div id="this-tab-view">
+      <div id="card-container">
+        <div id="current-card" class="tab-card">
+          <div class="card-header">
+            <img class="favicon" src="" alt="">
+            <div class="card-title-wrap">
+              <div class="card-title">Loading...</div>
+              <div class="card-url">-</div>
+            </div>
+          </div>
+
+          <!-- Preview -->
+          <div class="card-preview" id="card-preview">
+            <div class="preview-loading" id="preview-loading">Reading page...</div>
+            <div class="preview-text" id="preview-text"></div>
+          </div>
+
+          <!-- Suggested action chip (AI-powered) -->
+          <div id="suggested-action" class="suggested-action hidden">
+            <span class="suggested-icon"></span>
+            <span class="suggested-label"></span>
+          </div>
+
+          <div class="card-meta">
+            <span class="card-window-badge">Window 1</span>
+          </div>
+
+          <div class="card-actions">
+            <button class="action-btn close-btn" title="Close this tab (x)">
+              <span class="action-icon">&#x2715;</span>
+              <span>Close</span>
+            </button>
+            <button class="action-btn summarize-btn" title="AI Summary (s)">
+              <span class="action-icon">&#x2728;</span>
+              <span>Summarize</span>
+            </button>
+            <button class="action-btn action-queue-btn" title="Add to action queue (a)">
+              <span class="action-icon">!</span>
+              <span>Action</span>
+            </button>
+            <button class="action-btn snooze-btn" title="Snooze for later (z)">
+              <span class="action-icon">&#x25F7;</span>
+              <span>Snooze</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="empty-state" class="hidden">
+          <div class="empty-icon">&#x2713;</div>
+          <div class="empty-text">No tab to triage</div>
+          <div class="empty-sub">Navigate to a tab and come back</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ALL TABS: Category-grouped list -->
+    <div id="all-tabs-view" class="hidden">
+      <div id="all-tabs-toolbar">
+        <button id="dedup-all-btn" class="toolbar-btn dedup">Close All Duplicates <span id="dedup-all-count"></span></button>
+        <button id="group-by-category" class="toolbar-btn">Group in Browser</button>
+      </div>
+      <div id="domain-groups"></div>
+    </div>
+  </div>
+
+  <!-- AI SORT VIEW -->
+  <div id="ai-view" class="view hidden">
+    <div id="ai-start">
+      <div class="ai-hero">
+        <div class="ai-hero-icon">&#x2728;</div>
+        <h2>AI Tab Analysis</h2>
+        <p>Claude will analyze all your tabs and recommend what to close, keep, or act on.</p>
+        <p class="ai-hero-cost">Requires API credits (~$0.02 per analysis)</p>
+      </div>
+      <button id="ai-analyze-btn" class="ai-cta-btn">
+        <span class="ai-cta-icon">&#x26A1;</span>
+        Analyze All Tabs
+      </button>
+      <button id="ai-settings-btn" class="ai-settings-link">API Key Settings</button>
+    </div>
+
+    <div id="ai-loading" class="hidden">
+      <div class="ai-loader">
+        <div class="ai-spinner"></div>
+        <div class="ai-loading-text">Claude is analyzing your tabs...</div>
+        <div class="ai-loading-sub">This takes about 10-15 seconds</div>
+      </div>
+    </div>
+
+    <div id="ai-error" class="hidden">
+      <div class="ai-error-box">
+        <div class="ai-error-icon">!</div>
+        <div id="ai-error-text">Something went wrong</div>
+        <button id="ai-retry-btn" class="ai-cta-btn small">Try Again</button>
+      </div>
+    </div>
+
+    <div id="ai-results" class="hidden">
+      <div id="ai-summary">
+        <div class="ai-stat close" id="ai-stat-close">
+          <div class="ai-stat-num">0</div>
+          <div class="ai-stat-label">Close</div>
+        </div>
+        <div class="ai-stat keep" id="ai-stat-keep">
+          <div class="ai-stat-num">0</div>
+          <div class="ai-stat-label">Keep</div>
+        </div>
+        <div class="ai-stat action" id="ai-stat-action">
+          <div class="ai-stat-num">0</div>
+          <div class="ai-stat-label">Action</div>
+        </div>
+        <div class="ai-stat snooze" id="ai-stat-snooze">
+          <div class="ai-stat-num">0</div>
+          <div class="ai-stat-label">Snooze</div>
+        </div>
+      </div>
+
+      <div id="ai-batch-actions">
+        <button id="ai-close-all" class="ai-batch-btn close">Close <span class="batch-count">0</span> tabs</button>
+        <button id="ai-group-browser" class="ai-batch-btn group">Group in Browser</button>
+        <button id="ai-reanalyze" class="ai-batch-btn reanalyze">Re-analyze</button>
+      </div>
+
+      <div id="ai-filters">
+        <button class="ai-filter active" data-filter="all">All</button>
+        <button class="ai-filter" data-filter="close">Close</button>
+        <button class="ai-filter" data-filter="keep">Keep</button>
+        <button class="ai-filter" data-filter="action">Action</button>
+        <button class="ai-filter" data-filter="snooze">Snooze</button>
+      </div>
+
+      <div id="ai-tab-list"></div>
+    </div>
+
+  </div>
+
+  <!-- ACTIONS VIEW -->
+  <div id="actions-view" class="view hidden">
+    <div id="action-filters">
+      <button class="priority-filter active" data-priority="all">All</button>
+      <button class="priority-filter" data-priority="urgent">Urgent</button>
+      <button class="priority-filter" data-priority="this-week">This Week</button>
+      <button class="priority-filter" data-priority="someday">Someday</button>
+    </div>
+    <div id="action-list"></div>
+    <div id="action-empty" class="hidden">
+      <div class="empty-icon">!</div>
+      <div class="empty-text">No actions queued</div>
+      <div class="empty-sub">Use "Action" during triage to add items here</div>
+    </div>
+    <button id="export-sheets" class="export-btn hidden">Export to Google Sheets</button>
+  </div>
+
+  <!-- SNOOZED VIEW -->
+  <div id="snoozed-view" class="view hidden">
+    <div id="snoozed-list"></div>
+    <div id="snoozed-empty" class="hidden">
+      <div class="empty-icon">&#x25F7;</div>
+      <div class="empty-text">No snoozed tabs</div>
+      <div class="empty-sub">Snoozed tabs reopen automatically</div>
+    </div>
+  </div>
+
+  <!-- ANALYTICS VIEW -->
+  <div id="analytics-view" class="view hidden">
+    <div id="analytics-header">
+      <h2>Tab Analytics</h2>
+      <div id="analytics-timerange">
+        <button class="timerange-btn active" data-range="7d">7 Days</button>
+        <button class="timerange-btn" data-range="30d">30 Days</button>
+        <button class="timerange-btn" data-range="all">All Time</button>
+      </div>
+    </div>
+
+    <div id="analytics-dashboard">
+
+      <!-- Streak + Target hero -->
+      <div id="streak-hero">
+        <div id="streak-display">
+          <div id="streak-flame">&#x1F525;</div>
+          <div id="streak-number">0</div>
+          <div id="streak-label">day streak</div>
+        </div>
+        <div id="target-display">
+          <div id="target-status-text">Set a tab goal</div>
+          <div id="target-bar-wrap">
+            <div id="target-bar-fill"></div>
+            <div id="target-bar-marker"></div>
+          </div>
+          <div id="target-fraction"><span id="target-current">-</span> / <span id="target-goal">-</span> tabs</div>
+          <button id="edit-target-btn" class="target-edit-btn">Set goal</button>
+        </div>
+      </div>
+
+      <div id="analytics-summary">
+        <div class="summary-card" id="card-current">
+          <div class="summary-value" id="a-current-tabs">-</div>
+          <div class="summary-label">Current</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-value" id="a-best-tabs">-</div>
+          <div class="summary-label">Best</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-value" id="a-avg-tabs">-</div>
+          <div class="summary-label">Average</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-value" id="a-total-closed">-</div>
+          <div class="summary-label">Closed</div>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-title">Tab Count Over Time</div>
+        <canvas id="chart-tab-count" class="analytics-canvas"></canvas>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-title">Windows Over Time</div>
+        <canvas id="chart-window-count" class="analytics-canvas"></canvas>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-title">Category Breakdown</div>
+        <canvas id="chart-categories" class="analytics-canvas donut"></canvas>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-title">Top Domains</div>
+        <div id="chart-domains"></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-title">Actions Taken</div>
+        <canvas id="chart-actions" class="analytics-canvas"></canvas>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-title">Duplicates Over Time</div>
+        <canvas id="chart-duplicates" class="analytics-canvas"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODALS -->
+  <div id="snooze-modal" class="modal hidden">
+    <div class="modal-content">
+      <h3>Snooze for...</h3>
+      <div id="snooze-scope" class="snooze-scope-toggle">
+        <button class="scope-btn active" data-scope="tab">This Tab</button>
+        <button class="scope-btn" data-scope="window">Entire Window</button>
+      </div>
+      <button class="snooze-option" data-minutes="30">30 minutes</button>
+      <button class="snooze-option" data-minutes="60">1 hour</button>
+      <button class="snooze-option" data-minutes="240">4 hours</button>
+      <button class="snooze-option" data-minutes="1440">Tomorrow</button>
+      <button class="snooze-option" data-minutes="10080">Next week</button>
+      <button class="modal-cancel">Cancel</button>
+    </div>
+  </div>
+
+  <div id="target-modal" class="modal hidden">
+    <div class="modal-content">
+      <h3>Set Your Tab Goal</h3>
+      <p class="settings-desc">How many tabs do you want to stay under? Less is more.</p>
+      <div class="modal-field">
+        <label>Target tab count</label>
+        <input type="number" id="target-input" placeholder="20" min="1" max="500" value="20">
+      </div>
+      <div class="target-presets">
+        <button class="target-preset" data-target="10">Minimalist (10)</button>
+        <button class="target-preset" data-target="20">Focused (20)</button>
+        <button class="target-preset" data-target="40">Flexible (40)</button>
+      </div>
+      <button id="save-target" class="modal-confirm">Save Goal</button>
+      <button id="clear-target" class="modal-cancel-alt">Remove Goal</button>
+      <button class="modal-cancel">Cancel</button>
+    </div>
+  </div>
+
+  <div id="action-modal" class="modal hidden">
+    <div class="modal-content">
+      <h3>Queue action</h3>
+      <div class="modal-field">
+        <label>Priority</label>
+        <div class="priority-buttons">
+          <button class="priority-btn selected" data-priority="urgent">Urgent</button>
+          <button class="priority-btn" data-priority="this-week">This Week</button>
+          <button class="priority-btn" data-priority="someday">Someday</button>
+        </div>
+      </div>
+      <div class="modal-field">
+        <label>Note (optional)</label>
+        <input type="text" id="action-note" placeholder="What needs to be done?">
+      </div>
+      <button id="confirm-action" class="modal-confirm">Add to queue</button>
+      <button class="modal-cancel">Cancel</button>
+    </div>
+  </div>
+
+  <div id="settings-modal" class="modal hidden">
+    <div class="modal-content">
+      <h3>Claude API Key</h3>
+      <p class="settings-desc">Enter your Anthropic API key to enable AI features. Your key is stored locally and never shared.</p>
+      <div class="modal-field">
+        <label>API Key</label>
+        <input type="password" id="api-key-input" placeholder="sk-ant-api03-...">
+      </div>
+      <div id="key-status" class="hidden"></div>
+      <button id="save-api-key" class="modal-confirm">Save Key</button>
+      <button class="modal-cancel">Cancel</button>
+    </div>
+  </div>
+
+  <script src="sidepanel.js"></script>
+</body>
+</html>

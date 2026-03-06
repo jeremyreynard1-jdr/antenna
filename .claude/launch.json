@@ -1,0 +1,29 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "sql-playground"],
+      "port": 3000
+    },
+    {
+      "name": "linkedin-analyzer",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "linkedin-analyzer"],
+      "port": 3001
+    },
+    {
+      "name": "tab-manager",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "/Users/jeremyreynard/Desktop/Claude Code/tab-manager", "-l", "8190", "--no-clipboard"],
+      "port": 8190
+    },
+    {
+      "name": "rekindl",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "/Users/jeremyreynard/rekindl"],
+      "port": 3000
+    }
+  ]
+}
